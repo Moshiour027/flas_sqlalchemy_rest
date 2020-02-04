@@ -19,6 +19,26 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 
+class Author(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    specialisation = db.Column(db.String(50))
+
+
+def __init__(self, name, specialisation):
+    self.name = name
+    self.specialisation = specialisation
+
+
+def __repr__(self):
+    return '<Author%d>' % self.id
+
+
+class AuthorSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'name', 'specialisation')
+
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
@@ -42,6 +62,9 @@ class ProductSchema(ma.Schema):
 
 product_schema = ProductSchema()
 products_schema = ProductSchema(many=True)
+
+author_schema = AuthorSchema()
+authors_schema = AuthorSchema(many=True)
 
 
 @app.route('/product', methods=['POST'])
@@ -97,6 +120,24 @@ def delete_product(id):
     db.session.delete(product)
     db.session.commit()
     return product_schema.jsonify(product)
+
+
+@app.route("/authors", methods=['GET'])
+def get_authors():
+    all_authors = Author.query.all()
+    result = products_schema.dump(all_authors)
+    return jsonify(result)
+
+
+@app.route("/authors", methods=['POST'])
+def add_author():
+    name = request.json['name']
+    specialisation = request.json['specialisation']
+    new_author = Author(name, specialisation)
+    db.session.add(new_author)
+    db.session.commit()
+
+    return product_schema.jsonify(new_author)
 
 
 # Run Server
